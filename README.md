@@ -1,5 +1,5 @@
 # Sitecore.XDB.ReshardingTool
-This is the simple resharding tool for migrating Sitecore XDB data form 'n' shards to 'm' shards. Implemented and tested on Sitecore 9.1 version.
+This is the simple resharding tool for moving Sitecore XDB data from 'n' shards to 'm' shards. Tested on **Sitecore 9.1** version.
 ## Configurations
 In the `appsettings.json` file: 
 - add connections strings for source and target shard map managers
@@ -33,6 +33,15 @@ In the `appsettings.json` file:
 When the `appsettings.json` file is configured just run `...\ToolReleases\win-x64> .\Sitecore.XDB.ReshardingTool.exe` and choose a command that you want.
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/Sitecore.XDB.ReshardingTool_use.png)
 **NOTE:** for see details open `log{date}.txt` log file.
+
+**When the resharding process will be done start reindexing but need to clean up index cores before or you will get `IncompatibleSyncTokensException` exceptions.**
+```
+[Error] Failed indexing next set of changes. There will be an attempt to recover from the failure.
+Sitecore.Xdb.Collection.Failures.IncompatibleSyncTokensException: Tokens are incompatible, they have different set of shards.
+   at Sitecore.Xdb.Collection.Data.SqlServer.Managers.ChangeTracking.SyncToken.IsUpToDate(ISyncToken syncToken)
+   at Sitecore.Xdb.Collection.Data.SqlServer.SqlDataProvider.<GetChanges>d__16.MoveNext()
+--- End of stack trace from previous location where exception was thrown ---
+```
 
 ## How to install `m` shards
 Get [files](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/tree/master/Shards.Install) and configure in the `CreateXDB.ps1` installation params and if want more than 4 shards configure in the `CreateXDB.json` file : 
