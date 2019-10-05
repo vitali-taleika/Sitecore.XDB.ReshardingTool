@@ -35,7 +35,7 @@ In the `appsettings.json` file:
 
 **NOTE:** for see details open `log{date}.txt` log file.
 
-**2.** When the resharding process will be done start reindexing but need to **clean up index cores** before or you will get `IncompatibleSyncTokensException` exceptions.**
+**2.** When the resharding process will be done start reindexing but need to **clean up index cores** before or you will get `IncompatibleSyncTokensException` exceptions.
 ```
 [Error] Failed indexing next set of changes. There will be an attempt to recover from the failure.
 Sitecore.Xdb.Collection.Failures.IncompatibleSyncTokensException: Tokens are incompatible, they have different set of shards.
