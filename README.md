@@ -30,11 +30,12 @@ In the `appsettings.json` file:
 }
 ```
 ## How to use
-When the `appsettings.json` file is configured just run `...\ToolReleases\win-x64> .\Sitecore.XDB.ReshardingTool.exe` and choose a command that you want.
+1. When the `appsettings.json` file is configured just run `...\ToolReleases\win-x64> .\Sitecore.XDB.ReshardingTool.exe` and choose a command that you want.
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/Sitecore.XDB.ReshardingTool_use.png)
+
 **NOTE:** for see details open `log{date}.txt` log file.
 
-**When the resharding process will be done start reindexing but need to clean up index cores before or you will get `IncompatibleSyncTokensException` exceptions.**
+2. When the resharding process will be done start reindexing but need to **clean up index cores** before or you will get `IncompatibleSyncTokensException` exceptions.**
 ```
 [Error] Failed indexing next set of changes. There will be an attempt to recover from the failure.
 Sitecore.Xdb.Collection.Failures.IncompatibleSyncTokensException: Tokens are incompatible, they have different set of shards.
