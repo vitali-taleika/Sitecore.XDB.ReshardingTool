@@ -2,7 +2,7 @@
 This is the simple resharding tool for moving Sitecore XDB data from 'n' shards to 'm' shards. Tested on **Sitecore 9.1** version.
 ## Configurations
 In the `appsettings.json` file: 
-- add connections strings for source and target shard map managers
+- Add connections strings for source and target shard map managers
 - Change batch size
 - Change shard map names
 - Configure from what date need to move interactions (format:`yyyy-MM-dd`)
