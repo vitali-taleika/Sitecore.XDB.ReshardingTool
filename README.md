@@ -47,7 +47,7 @@ Sitecore.Xdb.Collection.Failures.IncompatibleSyncTokensException: Tokens are inc
 ## How to install `m` shards
 Download [Installation files](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/tree/master/Shards.Install). Update installation params in `CreateXDB.ps1`.
 
-**NOTE** Installations files were tested on `SIF 2.1.0`.
+**NOTE:** Installations files were tested on `SIF 2.1.0`.
 
 `CreateXDB.json` is configured for 4 shards, you only need to update the `CreateXDB.json` file if you want to add more shards.
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/shards_variables.png)
