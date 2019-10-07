@@ -3,10 +3,10 @@ This is the simple resharding tool for moving Sitecore XDB data from 'n' shards 
 ## Configurations
 In the `appsettings.json` file: 
 - add connections strings for source and target shard map managers
-- if need change batch size
-- if need change shard map names
-- if need configure from what date need to move interactions (format:`yyyy-MM-dd`)
-- if need `RESUME` mode need to configure `resharding.log` connection string 
+- Change batch size
+- Change shard map names
+- Configure from what date need to move interactions (format:`yyyy-MM-dd`)
+- For `RESUME` mode need to configure `resharding.log` connection string 
 
 **NOTE:** For create log database for `RESUME` mode use [Sitecore.XDB.ReshardingLog.sql](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/Sitecore.XDB.ReshardingLog.sql) file.
 ```
@@ -45,11 +45,13 @@ Sitecore.Xdb.Collection.Failures.IncompatibleSyncTokensException: Tokens are inc
 ```
 
 ## How to install `m` shards
-Get [files](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/tree/master/Shards.Install) and configure in the `CreateXDB.ps1` installation params and if want more than 4 shards configure in the `CreateXDB.json` file : 
-- add shard variables
+Download [Installation files](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/tree/master/Shards.Install). Update installation params in `CreateXDB.ps1`.
+
+**NOTE** Installations files were tested on `SIF 2.1.0`.
+
+`CreateXDB.json` is configured for 4 shards, you only need to update the `CreateXDB.json` file if you want to add more shards.
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/shards_variables.png)
-- add shard database user tasks
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/shards_db_user.png)
-- if need update database remove task
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/shard_remove_dbs.png)
+
  
