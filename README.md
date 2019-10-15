@@ -29,6 +29,8 @@ In the `appsettings.json` file:
   }
 }
 ```
+**NOTE:** `collectionuser` that is used by default in `collection` connection string doesn't have read/wright access to entity tables, so need to use `sa` or create a new user that has permissions
+
 ## How to use
 **1.** When the `appsettings.json` file is configured just run `...\ToolReleases\win-x64> .\Sitecore.XDB.ReshardingTool.exe` and choose a command that you want.
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/Sitecore.XDB.ReshardingTool_use.png)
