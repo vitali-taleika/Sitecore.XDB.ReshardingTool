@@ -56,4 +56,5 @@ Download [Installation files](https://github.com/pblrok/Sitecore.XDB.ReshardingT
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/shards_db_user.png)
 ![alt text](https://github.com/pblrok/Sitecore.XDB.ReshardingTool/blob/master/shard_remove_dbs.png)
 
- 
+ ## Updates 10/21/2019
+ - fixed the issue with shard mapping (Added partition key generator)
