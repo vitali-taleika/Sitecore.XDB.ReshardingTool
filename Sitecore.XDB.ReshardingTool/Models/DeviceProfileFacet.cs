@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlTypes;
+using Sitecore.XDB.ReshardingTool.Utilities;
 
 namespace Sitecore.XDB.ReshardingTool.Models
 {
@@ -12,7 +13,7 @@ namespace Sitecore.XDB.ReshardingTool.Models
         public string FacetData { get; set; }
         public byte[] GetKey()
         {
-            return DeviceProfileId.ToByteArray();
+            return PartitionKeyGenerator.Generate(DeviceProfileId);
         }
 
         public SqlGuid GetOrderFieldValue()

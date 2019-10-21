@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Data.SqlTypes;
+using Sitecore.XDB.ReshardingTool.Models;
+using Sitecore.XDB.ReshardingTool.Utilities;
 
 namespace Sitecore.XDB.ReshardingTool.Models
 {
@@ -12,7 +14,7 @@ namespace Sitecore.XDB.ReshardingTool.Models
         public double Percentile { get; set; }
         public byte[] GetKey()
         {
-            return ContactId.ToByteArray();
+            return PartitionKeyGenerator.Generate(ContactId);
         }
 
         public SqlGuid GetOrderFieldValue()
