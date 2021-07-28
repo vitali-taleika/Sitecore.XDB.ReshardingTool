@@ -63,7 +63,7 @@ namespace Sitecore.XDB.ReshardingTool.Services
 
             if (lastSubmitted != null)
             {
-                if (where != null)
+                if (!string.IsNullOrEmpty(where))
                 {
                     where += $"AND {fieldPrefix}{orderFieldName} > '{lastSubmitted:D}'";
                 }
