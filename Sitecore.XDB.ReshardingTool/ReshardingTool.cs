@@ -23,6 +23,8 @@ namespace Sitecore.XDB.ReshardingTool
         private readonly LogService _logService;
 
         private readonly int _batchSize;
+        private readonly int? _readThreads;
+        private readonly int? _writeThreadsPerSourceShard;
         private readonly bool _isResumeMode;
 
         private readonly string _sourceConn;
@@ -47,7 +49,9 @@ namespace Sitecore.XDB.ReshardingTool
             int connectionTimeout,
             int batchSize = 10000,
             int retryCount = 3,
-            int retryDelay = 1000
+            int retryDelay = 1000,
+            int? readThreads = null,
+            int? writeThreadsPerSourceShard = null
             )
         {
             _logger = logger;
@@ -63,6 +67,8 @@ namespace Sitecore.XDB.ReshardingTool
             _identifiersMap = identifiersMap;
 
             _batchSize = batchSize;
+            _readThreads = readThreads;
+            _writeThreadsPerSourceShard = writeThreadsPerSourceShard;
             _isResumeMode = isResumeMode;
             _logService = new LogService(logConn, _isResumeMode);
 
@@ -179,7 +185,7 @@ namespace Sitecore.XDB.ReshardingTool
                                 await _logService.Log<T>((Guid) GetPropValue(last, orderFieldName), sourceShardId);
 
 
-                        }, mappings.Count, token);
+                        }, _writeThreadsPerSourceShard ?? mappings.Count, token);
 
                         pageWatch.Stop();
                         LogInfo(typeof(T),sourceShard,null,$"bulk insert #{page} took {pageWatch.Elapsed}");
@@ -191,7 +197,7 @@ namespace Sitecore.XDB.ReshardingTool
 
                     token.ThrowIfCancellationRequested();
                 }
-            }, sourceShards.Count, token);
+            }, _readThreads ?? sourceShards.Count, token);
 
             _logger.Information($"Processing took {processStopWatch.Elapsed}");
         }
