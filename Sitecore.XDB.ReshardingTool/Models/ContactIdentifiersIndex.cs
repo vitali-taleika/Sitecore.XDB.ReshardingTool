@@ -14,7 +14,7 @@ namespace Sitecore.XDB.ReshardingTool.Models
         public Guid Version { get; set; }
         public byte[] GetKey()
         {
-            return PartitionKeyGenerator.Generate(ContactId);
+            return PartitionKeyGenerator.Generate(Identifier);
         }
         public SqlGuid GetOrderFieldValue()
         {
