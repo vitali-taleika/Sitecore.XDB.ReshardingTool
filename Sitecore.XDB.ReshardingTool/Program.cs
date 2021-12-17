@@ -38,7 +38,9 @@ namespace Sitecore.XDB.ReshardingTool
                     int.Parse(appSettings["ConnectionTimeout"]),
                     int.Parse(appSettings["BatchSize"]),
                     int.Parse(appSettings["RetryCount"]),
-                    int.Parse(appSettings["RetryDelay"])
+                    int.Parse(appSettings["RetryDelay"]),
+                    ParseNullableInt(appSettings["ReadThreads"]),
+                    ParseNullableInt(appSettings["WriteThreadsPerSourceShard"])
                 );
 
                 Console.WriteLine("Resharding is initialized, commands: -start, -stop, -quit/-q");
@@ -148,6 +150,16 @@ namespace Sitecore.XDB.ReshardingTool
             Log.CloseAndFlush();
             Console.WriteLine("Press any key to exit...");
             Console.ReadLine();
+        }
+
+        private static int? ParseNullableInt(string value)
+        {
+            if (int.TryParse(value, out var result))
+            {
+                return result;
+            }
+
+            return null;
         }
     }
 }

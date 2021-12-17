@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Dasync.Collections;
 using Microsoft.Azure.SqlDatabase.ElasticScale.ShardManagement;
 using Serilog;
 using Sitecore.XDB.ReshardingTool.Models;
@@ -21,6 +23,8 @@ namespace Sitecore.XDB.ReshardingTool
         private readonly LogService _logService;
 
         private readonly int _batchSize;
+        private readonly int? _readThreads;
+        private readonly int? _writeThreadsPerSourceShard;
         private readonly bool _isResumeMode;
 
         private readonly string _sourceConn;
@@ -45,7 +49,9 @@ namespace Sitecore.XDB.ReshardingTool
             int connectionTimeout,
             int batchSize = 10000,
             int retryCount = 3,
-            int retryDelay = 1000
+            int retryDelay = 1000,
+            int? readThreads = null,
+            int? writeThreadsPerSourceShard = null
             )
         {
             _logger = logger;
@@ -61,6 +67,8 @@ namespace Sitecore.XDB.ReshardingTool
             _identifiersMap = identifiersMap;
 
             _batchSize = batchSize;
+            _readThreads = readThreads;
+            _writeThreadsPerSourceShard = writeThreadsPerSourceShard;
             _isResumeMode = isResumeMode;
             _logService = new LogService(logConn, _isResumeMode);
 
@@ -116,21 +124,19 @@ namespace Sitecore.XDB.ReshardingTool
             string tableShortName = null)
             where T : IEntity, new()
         {
+            var processStopWatch = new Stopwatch();
+            processStopWatch.Start();
+
             var sourceShardMap = GetRangeShardMap(_sourceShardMapManager, rangeMapName);
             var sourceShards = sourceShardMap.GetShards().ToList();
             var targetShardMap = GetRangeShardMap(_targetShardMapManager, rangeMapName);
             var mappings = targetShardMap.GetMappings();
-
-#if DEBUG
             var counter = 0;
-            var count = await _readService.GetEntityesCountAsync<T>(sourceShards, _sourceConn, tableName, where, tableShortName);
-            LogInfo($"{typeof(T).Name} count: {count}");
-#endif
 
-            foreach (var sourceShard in sourceShards)
+            await sourceShards.ParallelForEachAsync(async sourceShard =>
             {
-                var sourceShardId = (Guid)GetPropValue(sourceShard, "Id", BindingFlags.Instance | BindingFlags.NonPublic);
-                LogInfo($"Reading data from shard: {sourceShard.Location.Database}");
+                var sourceShardId = (Guid) GetPropValue(sourceShard, "Id", BindingFlags.Instance | BindingFlags.NonPublic);
+                LogInfo(typeof(T), sourceShard,null, "Reading data from shard");
 
                 var lastSubmittedIds = new List<SqlGuid>();
                 if (_isResumeMode)
@@ -145,26 +151,44 @@ namespace Sitecore.XDB.ReshardingTool
 
                 while (!isProcessed)
                 {
-                    var entities = await _readService.GetEntityesAsync<T>(sourceShard, _sourceConn, tableName, orderFieldName, lastSubmittedIds.Any() ? lastSubmittedIds.OrderBy(x => x).LastOrDefault().Value : (Guid?)null, _batchSize, where, tableShortName);
+                    Stopwatch pageWatch = new Stopwatch();
+                    pageWatch.Start();
+
+                    LogInfo(typeof(T), sourceShard, null, "Start reading data from shard");
+                    var readWatch = new Stopwatch();
+                    readWatch.Start();
+                    var entities = await _readService.GetEntityesAsync<T>(sourceShard, _sourceConn, tableName, orderFieldName, lastSubmittedIds.Any() ? lastSubmittedIds.OrderBy(x => x).LastOrDefault().Value : (Guid?) null, _batchSize, where, tableShortName);
+                    readWatch.Stop();
+                    LogInfo(typeof(T), sourceShard, null, $"Reading data from shard took {readWatch.Elapsed}");
+
                     lastSubmittedIds.Clear();
                     if (entities.Any())
                     {
                         var splitedToShards = SplitToShards(mappings, entities);
-                        foreach (var splitedToShard in splitedToShards)
+                        await splitedToShards.ParallelForEachAsync(async splitedToShard =>
                         {
                             var sortedEntities = splitedToShard.Value.OrderBy(x => x.GetOrderFieldValue()).ToList();
                             var last = sortedEntities.Last();
+
+                            Stopwatch writeWatch = new Stopwatch();
+                            writeWatch.Start();
+                            LogInfo(typeof(T), sourceShard, splitedToShard.Key, "Start writing data to shard");
                             await _writeService.BulkInsertAsync(conn => splitedToShard.Key.OpenConnection(conn), sortedEntities, _targetConn, tableName, _batchSize);
-#if DEBUG
+                            writeWatch.Stop();
+                            LogInfo(typeof(T), sourceShard, splitedToShard.Key, $"Writing data to shard took {writeWatch.Elapsed}");
+
                             counter += sortedEntities.Count;
-                            LogInfo($"{typeof(T).Name} counter: {counter}");
-#endif
+                            LogInfo(typeof(T), sourceShard,  splitedToShard.Key, $"counter: {counter}, added {sortedEntities.Count} to shard {splitedToShard.Key.Location.Database}");
+                         
                             lastSubmittedIds.Add(last.GetOrderFieldValue());
                             if (_isResumeMode)
-                                await _logService.Log<T>((Guid)GetPropValue(last, orderFieldName), sourceShardId);
-                        }
+                                await _logService.Log<T>((Guid) GetPropValue(last, orderFieldName), sourceShardId);
 
-                        LogInfo($"{typeof(T).Name} bulk insert #{page}");
+
+                        }, _writeThreadsPerSourceShard ?? mappings.Count, token);
+
+                        pageWatch.Stop();
+                        LogInfo(typeof(T),sourceShard,null,$"bulk insert #{page} took {pageWatch.Elapsed}");
                         page++;
                     }
 
@@ -173,8 +197,11 @@ namespace Sitecore.XDB.ReshardingTool
 
                     token.ThrowIfCancellationRequested();
                 }
-            }
+            }, _readThreads ?? sourceShards.Count, token);
+
+            _logger.Information($"Processing took {processStopWatch.Elapsed}");
         }
+
 
         private object GetPropValue(object src, string propName, BindingFlags flags = BindingFlags.Instance | BindingFlags.Public)
         {
@@ -213,8 +240,10 @@ namespace Sitecore.XDB.ReshardingTool
             return new ShardRange(new ShardKey(ShardKey.ShardKeyTypeFromType(typeof(T)), range.Low), new ShardKey(ShardKey.ShardKeyTypeFromType(typeof(T)), range.High)).Contains(key1);
         }
 
-        private void LogInfo(string msg)
+        private void LogInfo(Type type, Shard sourceShard, Shard targetShard, string message)
         {
+            var targetShardName = targetShard != null ? $" [{targetShard.Location.Database}]" : "";
+            var msg = $"[{type.Name}] [{sourceShard.Location.Database}]{targetShardName} {message}";
             _logger.Information(msg);
 #if DEBUG
             Console.WriteLine(msg);
