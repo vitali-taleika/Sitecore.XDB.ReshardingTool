@@ -24,7 +24,7 @@ namespace Sitecore.XDB.ReshardingTool.Models
         public double Percentile { get; set; }
         public byte[] GetKey()
         {
-            return PartitionKeyGenerator.Generate(InteractionId);
+            return PartitionKeyGenerator.Generate(ContactId);
         }
 
         public SqlGuid GetOrderFieldValue()
