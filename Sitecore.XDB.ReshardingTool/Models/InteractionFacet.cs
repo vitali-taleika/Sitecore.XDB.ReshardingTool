@@ -14,7 +14,7 @@ namespace Sitecore.XDB.ReshardingTool.Models
         public string FacetData { get; set; }
         public byte[] GetKey()
         {
-            return PartitionKeyGenerator.Generate(InteractionId);
+            return PartitionKeyGenerator.Generate(ContactId);
         }
 
         public SqlGuid GetOrderFieldValue()
